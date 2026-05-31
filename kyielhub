@@ -1,0 +1,272 @@
+--// Services
+local TweenService = game:GetService("TweenService")
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+
+local LP = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+
+--// Fly variables
+local flying = false
+local flySpeed = 50
+local flyConn
+
+--// Main GUI
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Parent = game.CoreGui
+ScreenGui.ResetOnSpawn = false
+
+--// Open Button
+local OpenBtn = Instance.new("TextButton")
+OpenBtn.Parent = ScreenGui
+OpenBtn.Size = UDim2.new(0, 120, 0, 40)
+OpenBtn.Position = UDim2.new(0, 10, 0.5, 0)
+OpenBtn.Text = "OPEN MENU"
+OpenBtn.BackgroundColor3 = Color3.fromRGB(30,30,30)
+OpenBtn.TextColor3 = Color3.new(1,1,1)
+Instance.new("UICorner", OpenBtn).CornerRadius = UDim.new(0,8)
+
+--// Main Frame
+local Main = Instance.new("Frame")
+Main.Parent = ScreenGui
+Main.Size = UDim2.new(0, 350, 0, 260)
+Main.Position = UDim2.new(0.5, -175, 0.5, -130)
+Main.BackgroundColor3 = Color3.fromRGB(20,20,20)
+Main.Active = true
+Main.Draggable = true
+Main.BorderSizePixel = 0
+Main.Visible = false
+Instance.new("UICorner", Main).CornerRadius = UDim.new(0,10)
+
+--// Title
+local Title = Instance.new("TextLabel")
+Title.Parent = Main
+Title.Size = UDim2.new(1,0,0,30)
+Title.Text = "ðŸ”¥ Reykyiel Hub"
+Title.TextColor3 = Color3.new(1,1,1)
+Title.BackgroundTransparency = 1
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 16
+
+--// TOP MESSAGE
+local TopMsg = Instance.new("TextLabel")
+TopMsg.Parent = Main
+TopMsg.Size = UDim2.new(1,0,0,20)
+TopMsg.Position = UDim2.new(0,0,0,30)
+TopMsg.Text = "Click misc to unlock antiafk and fly"
+TopMsg.TextColor3 = Color3.fromRGB(200,200,200)
+TopMsg.BackgroundTransparency = 1
+TopMsg.Font = Enum.Font.Gotham
+TopMsg.TextSize = 12
+
+--// Close Button
+local CloseBtn = Instance.new("TextButton")
+CloseBtn.Parent = Main
+CloseBtn.Size = UDim2.new(0,30,0,30)
+CloseBtn.Position = UDim2.new(1,-35,0,0)
+CloseBtn.Text = "X"
+CloseBtn.BackgroundColor3 = Color3.fromRGB(200,50,50)
+CloseBtn.TextColor3 = Color3.new(1,1,1)
+Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0,6)
+
+--// Profile
+local Profile = Instance.new("Frame")
+Profile.Parent = Main
+Profile.Size = UDim2.new(1,0,0,50)
+Profile.Position = UDim2.new(0,0,0,50)
+Profile.BackgroundColor3 = Color3.fromRGB(25,25,25)
+Instance.new("UICorner", Profile).CornerRadius = UDim.new(0,8)
+
+--// Tabs
+local Tabs = Instance.new("Frame")
+Tabs.Parent = Main
+Tabs.Size = UDim2.new(0,100,1,-100)
+Tabs.Position = UDim2.new(0,0,0,100)
+Tabs.BackgroundColor3 = Color3.fromRGB(25,25,25)
+Instance.new("UICorner", Tabs).CornerRadius = UDim.new(0,8)
+
+--// Content
+local Content = Instance.new("Frame")
+Content.Parent = Main
+Content.Size = UDim2.new(1,-100,1,-100)
+Content.Position = UDim2.new(0,100,0,100)
+Content.BackgroundTransparency = 1
+
+--// Open/Close
+OpenBtn.MouseButton1Click:Connect(function()
+	Main.Visible = true
+	OpenBtn.Visible = false
+end)
+
+CloseBtn.MouseButton1Click:Connect(function()
+	Main.Visible = false
+	OpenBtn.Visible = true
+end)
+
+--// Tabs function
+function createTab(name)
+	local btn = Instance.new("TextButton")
+	btn.Parent = Tabs
+	btn.Size = UDim2.new(1,0,0,40)
+	btn.Text = name
+	btn.BackgroundColor3 = Color3.fromRGB(35,35,35)
+	btn.TextColor3 = Color3.new(1,1,1)
+
+	local page = Instance.new("Frame")
+	page.Parent = Content
+	page.Size = UDim2.new(1,0,1,0)
+	page.Visible = false
+	page.BackgroundTransparency = 1
+
+	btn.MouseButton1Click:Connect(function()
+		for _,v in pairs(Content:GetChildren()) do
+			if v:IsA("Frame") then
+				v.Visible = false
+			end
+		end
+		page.Visible = true
+	end)
+
+	return page
+end
+
+--// Tabs
+local MainTab = createTab("Main")
+local PlayerTab = createTab("Player")
+local FlyTab = createTab("Fly")
+local MiscTab = createTab("Misc")
+
+MainTab.Visible = true
+
+--// Toggle
+function createToggle(parent, text, callback)
+	local btn = Instance.new("TextButton")
+	btn.Parent = parent
+	btn.Size = UDim2.new(0,200,0,40)
+	btn.Position = UDim2.new(0,10,0,10 + (#parent:GetChildren()*45))
+	btn.Text = text.." OFF"
+	btn.BackgroundColor3 = Color3.fromRGB(40,40,40)
+	btn.TextColor3 = Color3.new(1,1,1)
+
+	local state = false
+
+	btn.MouseButton1Click:Connect(function()
+		state = not state
+
+		if state then
+			btn.Text = text.." ON"
+			TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(0,170,255)}):Play()
+		else
+			btn.Text = text.." OFF"
+			TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(40,40,40)}):Play()
+		end
+
+		callback(state)
+	end)
+end
+
+--// MAIN FEATURES
+createToggle(MainTab, "Auto Win", function(v) end)
+createToggle(MainTab, "Pass Spam", function(v) end)
+
+createToggle(PlayerTab, "Speed", function(v)
+	local hum = LP.Character:WaitForChild("Humanoid")
+	hum.WalkSpeed = v and 50 or 16
+end)
+
+createToggle(PlayerTab, "Jump Power", function(v)
+	local hum = LP.Character:WaitForChild("Humanoid")
+	hum.JumpPower = v and 100 or 50
+end)
+
+createToggle(MiscTab, "Anti AFK", function(v)
+	if v then
+		local vu = game:GetService("VirtualUser")
+		vu:CaptureController()
+	end
+end)
+
+--// FLY SYSTEM
+local FlyToggle = Instance.new("TextButton")
+FlyToggle.Parent = FlyTab
+FlyToggle.Size = UDim2.new(0,200,0,40)
+FlyToggle.Position = UDim2.new(0,10,0,10)
+FlyToggle.Text = "FLY OFF"
+FlyToggle.BackgroundColor3 = Color3.fromRGB(40,40,40)
+FlyToggle.TextColor3 = Color3.new(1,1,1)
+
+Instance.new("UICorner", FlyToggle).CornerRadius = UDim.new(0,6)
+
+FlyToggle.MouseButton1Click:Connect(function()
+	flying = not flying
+
+	if flying then
+		FlyToggle.Text = "FLY ON"
+		TweenService:Create(FlyToggle, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(0,170,255)}):Play()
+
+		flyConn = RunService.RenderStepped:Connect(function()
+			local char = LP.Character
+			if not char then return end
+			local hrp = char:FindFirstChild("HumanoidRootPart")
+			if not hrp then return end
+
+			local move = Vector3.new()
+
+			if UserInputService:IsKeyDown(Enum.KeyCode.W) then
+				move = move + Camera.CFrame.LookVector
+			end
+			if UserInputService:IsKeyDown(Enum.KeyCode.S) then
+				move = move - Camera.CFrame.LookVector
+			end
+			if UserInputService:IsKeyDown(Enum.KeyCode.A) then
+				move = move - Camera.CFrame.RightVector
+			end
+			if UserInputService:IsKeyDown(Enum.KeyCode.D) then
+				move = move + Camera.CFrame.RightVector
+			end
+			if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
+				move = move + Vector3.new(0,1,0)
+			end
+			if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then
+				move = move - Vector3.new(0,1,0)
+			end
+
+			hrp.Velocity = move.Unit * flySpeed
+		end)
+	else
+		FlyToggle.Text = "FLY OFF"
+		if flyConn then flyConn:Disconnect() end
+	end
+end)
+
+--// SPEED + / -
+local SpeedLabel = Instance.new("TextLabel")
+SpeedLabel.Parent = FlyTab
+SpeedLabel.Size = UDim2.new(0,200,0,30)
+SpeedLabel.Position = UDim2.new(0,10,0,60)
+SpeedLabel.Text = "Fly Speed: "..flySpeed
+SpeedLabel.TextColor3 = Color3.new(1,1,1)
+SpeedLabel.BackgroundTransparency = 1
+
+local Plus = Instance.new("TextButton")
+Plus.Parent = FlyTab
+Plus.Size = UDim2.new(0,40,0,30)
+Plus.Position = UDim2.new(0,10,0,100)
+Plus.Text = "+"
+
+local Minus = Instance.new("TextButton")
+Minus.Parent = FlyTab
+Minus.Size = UDim2.new(0,40,0,30)
+Minus.Position = UDim2.new(0,60,0,100)
+Minus.Text = "-"
+
+Plus.MouseButton1Click:Connect(function()
+	flySpeed = math.clamp(flySpeed + 10, 10, 300)
+	SpeedLabel.Text = "Fly Speed: "..flySpeed
+end)
+
+Minus.MouseButton1Click:Connect(function()
+	flySpeed = math.clamp(flySpeed - 10, 10, 300)
+	SpeedLabel.Text = "Fly Speed: "..flySpeed
+end)
